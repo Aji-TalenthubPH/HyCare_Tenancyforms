@@ -107,9 +107,6 @@ p{margin:0 0 12px}
 .pw-toggle .eye-off{display:none}
 .pw-toggle[aria-pressed="true"] .eye-open{display:none}
 .pw-toggle[aria-pressed="true"] .eye-off{display:block}
-@media (max-width:640px){
-  body.owner .pw-toggle{width:40px}
-}
 
 .section-head{display:flex;align-items:flex-start;gap:12px}
 .section-head h2{margin-top:2px}
