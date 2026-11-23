@@ -102,6 +102,7 @@ async function load(){
   try{const {jobs}=await api('list-jobs');
     $('#jobs').innerHTML=jobs.map(j=>{const prog=j.signers.map(s=>(s.role==='staff'?'Me':'Resident')+': '+s.status.replace('opened','opened, not signed').replace('sent','waiting for them')).join('<br>');
       const act=[];if(['sent','in_progress'].includes(j.status))act.push(`<button data-a="resend" data-id="${j.id}">Resend</button>`,`<button data-a="cancel" data-id="${j.id}">Cancel</button>`);
+      act.push(`<button class="ghost" data-a="archive" data-id="${j.id}" data-status="${j.status}">Remove</button>`);
       if(j.finalUrl)act.push(`<a href="${esc(j.finalUrl)}"><button>Download signed PDF</button></a>`);
       return `<tr><td>${new Date(j.created_at).toLocaleString('en-AU')}</td><td>${FORM[j.form]}</td><td>${esc(j.recipient_name||'')}<br><span style="color:var(--mute)">${esc(j.recipient_email)}</span></td><td><span class="badge">${STATUS[j.status]||j.status}</span></td><td>${prog}</td><td><div class="row">${act.join('')}</div></td></tr>`}).join('')||'<tr><td colspan="6" style="color:var(--mute)">No jobs yet.</td></tr>'}
   catch(e){$('#jmsg').textContent=e.message}
@@ -117,8 +118,9 @@ $('#send').onclick=async()=>{
   catch(e){m.className='msg err';m.textContent=e.message}$('#send').disabled=false};
 $('#jobs').onclick=async e=>{const b=e.target.closest('button[data-a]');if(!b)return;
   if(b.dataset.a==='cancel'&&!confirm('Cancel this signing job? Links will stop working.'))return;
+  if(b.dataset.a==='archive'&&!confirm(['sent','in_progress','finalizing'].includes(b.dataset.status)?'Remove this job from the list? Its signing links will stop working. The record is kept, just hidden.':'Remove this job from the list? The record is kept, just hidden.'))return;
   try{const j=await api('job-action',{method:'POST',body:JSON.stringify({action:b.dataset.a,jobId:b.dataset.id})});
-    $('#jmsg').textContent=b.dataset.a==='resend'?('Link resent.'+(j.link?' Test link: '+j.link:'')):'Cancelled.';load()}
+    $('#jmsg').textContent=b.dataset.a==='resend'?('Link resent.'+(j.link?' Test link: '+j.link:'')):b.dataset.a==='archive'?'Removed from the list.':'Cancelled.';load()}
   catch(err){$('#jmsg').textContent=err.message}};
 if(KEY)enter();
 </script>

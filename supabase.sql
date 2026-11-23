@@ -18,7 +18,8 @@ create table if not exists signing_jobs (
   final_sha256 text,
   expires_at timestamptz not null default (now() + interval '14 days'),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  deleted_at timestamptz
 );
 
 create table if not exists signers (
@@ -60,3 +61,11 @@ alter table audit_events enable row level security;
 insert into storage.buckets (id, name, public)
 values ('signing-pdfs', 'signing-pdfs', false)
 on conflict (id) do nothing;
+
+-- Safe to re-run on a database created before these columns existed.
+alter table public.signing_jobs add column if not exists first_role text not null default 'resident';
+alter table public.signing_jobs drop constraint if exists signing_jobs_first_role_check;
+alter table public.signing_jobs add constraint signing_jobs_first_role_check check (first_role in ('resident','staff'));
+alter table public.signing_jobs add column if not exists deleted_at timestamptz;
+
+notify pgrst, 'reload schema';
