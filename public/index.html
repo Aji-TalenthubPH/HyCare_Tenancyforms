@@ -27,7 +27,13 @@
     <p class="hint">Enter the owner password to send forms and see signing jobs.</p>
     <div class="field" style="margin-top:16px">
       <label for="pw">Password</label>
-      <input id="pw" type="password" autocomplete="current-password">
+      <div class="pw-wrap">
+        <input id="pw" type="password" autocomplete="current-password">
+        <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password" aria-pressed="false">
+          <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 4.2A10.5 10.5 0 0 1 12 4c6.5 0 10 7 10 7a18.4 18.4 0 0 1-2.2 3.2"/><path d="M6.6 6.6A18.7 18.7 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>
+        </button>
+      </div>
     </div>
     <div class="row actions"><button class="primary" id="go" type="button">Log in</button></div>
     <div class="msg err" id="lerr"></div>
@@ -101,6 +107,7 @@ async function load(){
   catch(e){$('#jmsg').textContent=e.message}
 }
 $('#go').onclick=()=>{KEY=$('#pw').value;enter()};$('#pw').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+$('#pw-toggle').onclick=()=>{const show=$('#pw').type==='password';$('#pw').type=show?'text':'password';$('#pw-toggle').setAttribute('aria-pressed',show?'true':'false');$('#pw-toggle').setAttribute('aria-label',show?'Hide password':'Show password')};
 $('#form').onchange=setFirst;$('#refresh').onclick=load;
 $('#send').onclick=async()=>{
   const m=$('#smsg');m.className='msg';m.textContent='Sending…';$('#send').disabled=true;
