@@ -40,9 +40,16 @@ td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{border:0;border-radius:0;background:var(--card)}
 .seg button[aria-pressed=true]{background:var(--acc);color:var(--acc-ink)}
-.steps{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.steps{display:none;gap:6px;flex-wrap:wrap;margin:14px 0}
 .step{border-radius:999px;padding:5px 12px;font-size:.88rem;background:var(--bg);border:1px solid var(--line);color:var(--mute)}
 .step.on{background:var(--soft);border-color:var(--acc);color:var(--ink);font-weight:600}
+.step-nav{display:block;margin:14px 0}
+.step-nav .step-meta{display:block;font-size:.82rem;color:var(--mute);margin-bottom:6px;font-weight:500}
+.step-nav select{font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+@media (min-width:640px){
+  .steps{display:flex}
+  .step-nav{display:none}
+}
 .field{margin-bottom:16px}
 .field>label,.field>.lbl{display:block;font-weight:600;margin-bottom:5px}
 .opt{display:flex;gap:8px;align-items:center;padding:4px 0;font-weight:400}
@@ -78,7 +85,7 @@ input:disabled,select:disabled{opacity:.75;cursor:not-allowed}
   <span class="crumb">Tenancy Signing</span>
 </header>
 <main>
-<p class="mute" id="intro">Loading your formâ€¦</p>
+<p class="mute" id="intro">Loading your form...</p>
 
 
 
@@ -199,7 +206,7 @@ function visible(){return S.fields.filter(f=>f.include&&(LOCKED.has(f.name)?!isE
 function ctl(f,i,v){
   if(f.type==='text')return f.ui==='yn'?`<select data-f="${i}"><option value=""></option><option ${v==='Y'?'selected':''}>Y</option><option ${v==='N'?'selected':''}>N</option></select>`:`<input type="text" data-f="${i}" value="${esc(v)}">`;
   if(f.type==='radio')return f.options.map(o=>`<label class="opt"><input type="radio" name="r${i}" data-f="${i}" value="${esc(o)}" ${v===o?'checked':''}> ${esc(o)}</label>`).join('');
-  return `<select data-f="${i}"><option value="">Selectâ€¦</option>${f.options.map(o=>`<option value="${esc(o)}" ${v===o?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  return `<select data-f="${i}"><option value="">Select...</option>${f.options.map(o=>`<option value="${esc(o)}" ${v===o?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
 }
 function renderItems(list){
   let out='',seen={},k=0;
@@ -308,7 +315,9 @@ function viewFill(){
   if(!vis.length)return head+'<p class="mute">No questions are shown to this role. Change the setup or pick another role.</p>';
   const items=cur===SIGN?viewSign(sigSlots()):renderItems(vis.filter(f=>(f.step.trim()||'Details')===cur));
   const last=S.step===steps.length-1;
-  return head+`<div class="steps">${steps.map((s,i)=>`<button class="step ${i===S.step?'on':''}" data-act="goto" data-v="${i}">${esc(s)}</button>`).join('')}</div>
+  const pills=`<div class="steps">${steps.map((s,i)=>`<button type="button" class="step ${i===S.step?'on':''}" data-act="goto" data-v="${i}">${esc(s)}</button>`).join('')}</div>`;
+  const drop=`<label class="step-nav"><span class="step-meta">Step ${S.step+1} of ${steps.length}</span><select id="step-select" aria-label="Jump to step">${steps.map((s,i)=>`<option value="${i}" ${i===S.step?'selected':''}>${esc(s)}</option>`).join('')}</select></label>`;
+  return head+pills+drop+`
   ${items}
   <div class="row" style="margin-top:14px">
     <button data-act="back" ${S.step===0?'disabled':''}>Back</button>
@@ -329,7 +338,7 @@ async function save(filename,data){
   }catch(e){return 'unavailable'}
 }
 async function download(){
-  const m=$('#fillmsg');m.className='msg';m.textContent='Building PDFâ€¦';
+  const m=$('#fillmsg');m.className='msg';m.textContent='Building PDF...';
   try{
     const doc=await PDFDocument.load(S.bytes,{ignoreEncryption:true});const form=doc.getForm();let bad=0;
     for(const f of S.fields){
@@ -378,7 +387,10 @@ $('#app').addEventListener('input',e=>{
   else if(t.id==='consent'){S.consent=t.checked}
   else if(t.id==='tplfile'&&t.files[0]){t.files[0].text().then(applyTpl);t.value=''}
 });
-$('#app').addEventListener('change',e=>{if(e.target.id==='tplfile'&&e.target.files[0]){e.target.files[0].text().then(applyTpl);e.target.value=''}});
+$('#app').addEventListener('change',e=>{
+  if(e.target.id==='step-select'){S.step=+e.target.value;render();return}
+  if(e.target.id==='tplfile'&&e.target.files[0]){e.target.files[0].text().then(applyTpl);e.target.value=''}
+});
 $('#app').addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act;
@@ -432,7 +444,7 @@ async function finish(){
   const names=new Set(own.map(f=>f.name));
   S.fields.forEach(x=>{if(x.mirror&&own.some(o=>o.mirror===x.mirror))names.add(x.name)});
   const answers={};names.forEach(n=>{if(S.values[n]!==undefined)answers[n]=S.values[n]});
-  const btn=document.querySelector('[data-act=finish]');if(btn)btn.disabled=true;say('Sendingâ€¦',false);
+  const btn=document.querySelector('[data-act=finish]');if(btn)btn.disabled=true;say('Sending...',false);
   try{
     const r=await fetch('/.netlify/functions/complete-signer',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:TOKEN,answers,signaturePng:S.sigs[sl.k],consent:true})});
     const j=await r.json();
