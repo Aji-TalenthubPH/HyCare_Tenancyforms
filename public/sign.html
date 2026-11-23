@@ -78,7 +78,7 @@ input:disabled,select:disabled{opacity:.75;cursor:not-allowed}
   <span class="crumb">Tenancy Signing</span>
 </header>
 <main>
-<p class="mute" id="intro">Loading your formâ€¦</p>
+<p class="mute" id="intro">Loading your form...</p>
 
 
 
@@ -199,7 +199,7 @@ function visible(){return S.fields.filter(f=>f.include&&(LOCKED.has(f.name)?!isE
 function ctl(f,i,v){
   if(f.type==='text')return f.ui==='yn'?`<select data-f="${i}"><option value=""></option><option ${v==='Y'?'selected':''}>Y</option><option ${v==='N'?'selected':''}>N</option></select>`:`<input type="text" data-f="${i}" value="${esc(v)}">`;
   if(f.type==='radio')return f.options.map(o=>`<label class="opt"><input type="radio" name="r${i}" data-f="${i}" value="${esc(o)}" ${v===o?'checked':''}> ${esc(o)}</label>`).join('');
-  return `<select data-f="${i}"><option value="">Selectâ€¦</option>${f.options.map(o=>`<option value="${esc(o)}" ${v===o?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  return `<select data-f="${i}"><option value="">Select...</option>${f.options.map(o=>`<option value="${esc(o)}" ${v===o?'selected':''}>${esc(o)}</option>`).join('')}</select>`;
 }
 function renderItems(list){
   let out='',seen={},k=0;
@@ -329,7 +329,7 @@ async function save(filename,data){
   }catch(e){return 'unavailable'}
 }
 async function download(){
-  const m=$('#fillmsg');m.className='msg';m.textContent='Building PDFâ€¦';
+  const m=$('#fillmsg');m.className='msg';m.textContent='Building PDF...';
   try{
     const doc=await PDFDocument.load(S.bytes,{ignoreEncryption:true});const form=doc.getForm();let bad=0;
     for(const f of S.fields){
@@ -432,7 +432,7 @@ async function finish(){
   const names=new Set(own.map(f=>f.name));
   S.fields.forEach(x=>{if(x.mirror&&own.some(o=>o.mirror===x.mirror))names.add(x.name)});
   const answers={};names.forEach(n=>{if(S.values[n]!==undefined)answers[n]=S.values[n]});
-  const btn=document.querySelector('[data-act=finish]');if(btn)btn.disabled=true;say('Sendingâ€¦',false);
+  const btn=document.querySelector('[data-act=finish]');if(btn)btn.disabled=true;say('Sending...',false);
   try{
     const r=await fetch('/.netlify/functions/complete-signer',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:TOKEN,answers,signaturePng:S.sigs[sl.k],consent:true})});
     const j=await r.json();
