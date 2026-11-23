@@ -1,41 +1,84 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Tenancy signing: owner</title>
-<style>
-:root{--bg:#f2f5f8;--card:#fff;--ink:#14202b;--mute:#5c6b78;--line:#d9e0e7;--acc:#0f5f8a;--acc-ink:#fff;--soft:#e2eef5;--bad:#b3341f;color-scheme:light dark}
-@media (prefers-color-scheme:dark){:root{--bg:#0f161d;--card:#18222c;--ink:#e8eef3;--mute:#9aabb9;--line:#2a3743;--acc:#5db3e3;--acc-ink:#07202e;--soft:#1c2f3d;--bad:#ff8f7a}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:960px;margin:0 auto;padding:24px 16px 64px}h1{font-size:1.6rem;margin:0 0 14px}h2{font-size:1.1rem;margin:0 0 10px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
-label{display:block;font-weight:600;font-size:.92rem;margin:12px 0 4px}
-input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
-button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:9px 14px;cursor:pointer}
-button.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}button:disabled{opacity:.5}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 14px}
-.msg{margin-top:12px;font-size:.92rem}.err{color:var(--bad)}.scroll{overflow-x:auto}
-table{border-collapse:collapse;width:100%;min-width:720px}th{text-align:left;font-size:.82rem;color:var(--mute);padding:6px 8px;border-bottom:1px solid var(--line)}
-td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.92rem}
-.badge{font-size:.75rem;background:var(--soft);color:var(--acc);border-radius:999px;padding:2px 8px;white-space:nowrap}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}[hidden]{display:none!important}
-</style></head><body><main>
-<h1>Tenancy signing</h1>
-<section class="card" id="login"><h2>Owner login</h2>
-  <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password">
-  <div class="row" style="margin-top:12px"><button class="primary" id="go">Log in</button></div><div class="msg err" id="lerr"></div></section>
-<div id="app" hidden>
-<section class="card"><h2>Send a form for signing</h2>
-  <div class="grid">
-    <div><label for="form">Form</label><select id="form"><option value="r18">Form R18: Rooming accommodation agreement</option><option value="f1a">Form 1a: Entry condition report</option></select></div>
-    <div><label for="first">Who completes it first?</label><select id="first"><option value="resident">The resident or tenant first, then me</option><option value="staff">Me first, then the resident or tenant</option></select></div>
-    <div><label for="rname">Resident or tenant name</label><input id="rname" autocomplete="off"></div>
-    <div><label for="remail">Resident or tenant email</label><input id="remail" type="email" autocomplete="off"></div>
-    <div><label for="oname">Your name</label><input id="oname"></div>
-    <div><label for="oemail">Your email</label><input id="oemail" type="email"></div>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Tenancy Signing</title>
+<link rel="icon" href="assets/hycare-logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/hycare.css">
+</head>
+<body class="owner">
+<header class="topbar">
+  <img class="brand-logo" src="assets/hycare-logo.svg" alt="HyCare Disability and Community Services">
+  <span class="crumb">Tenancy Signing</span>
+</header>
+<main>
+  <div class="pagehead">
+    <h1>Tenancy Signing</h1>
+    <p>Prepare and manage tenancy documents</p>
   </div>
-  <div class="row" style="margin-top:16px"><button class="primary" id="send">Send</button></div><div class="msg" id="smsg" role="status"></div>
-</section>
-<section class="card"><div class="row" style="justify-content:space-between"><h2>Signing jobs</h2><button id="refresh">Refresh</button></div>
-  <div class="scroll"><table><thead><tr><th>Sent</th><th>Form</th><th>Resident</th><th>Status</th><th>Progress</th><th></th></tr></thead><tbody id="jobs"></tbody></table></div><div class="msg" id="jmsg"></div></section>
-</div>
+
+  <section class="card login-card" id="login">
+    <h2>Owner login</h2>
+    <p class="hint">Enter the owner password to send forms and see signing jobs.</p>
+    <div class="field" style="margin-top:16px">
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password">
+    </div>
+    <div class="row actions"><button class="primary" id="go" type="button">Log in</button></div>
+    <div class="msg err" id="lerr"></div>
+  </section>
+
+  <div id="app" hidden>
+    <section class="card">
+      <div class="section-head">
+        <span class="num" aria-hidden="true">1</span>
+        <div class="section-copy">
+          <h2>Send a form for signing</h2>
+          <div class="stepper" aria-hidden="true">
+            <span class="pip on"><span>1</span> Prepare form</span>
+            <span class="bar"></span>
+            <span class="pip"><span>2</span> Manage signing jobs</span>
+          </div>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="field"><label for="form">Form</label><select id="form"><option value="r18">Form R18: Rooming accommodation agreement</option><option value="f1a">Form 1a: Entry condition report</option></select></div>
+        <div class="field"><label for="first">Who completes it first?</label><select id="first"><option value="resident">The resident or tenant first, then me</option><option value="staff">Me first, then the resident or tenant</option></select></div>
+        <div class="field"><label for="rname">Resident or tenant name</label><input id="rname" autocomplete="off"></div>
+        <div class="field"><label for="remail">Resident or tenant email</label><input id="remail" type="email" autocomplete="off" inputmode="email"></div>
+        <div class="field"><label for="oname">Your name</label><input id="oname"></div>
+        <div class="field"><label for="oemail">Your email</label><input id="oemail" type="email" inputmode="email"></div>
+      </div>
+      <div class="row actions"><button class="primary" id="send" type="button"><svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>Send for signing</button></div>
+      <div class="msg" id="smsg" role="status"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <span class="num" aria-hidden="true">2</span>
+        <h2>Signing jobs</h2>
+        <button id="refresh" class="ghost" type="button"><svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.3L21 8"/><path d="M21 3v5h-5"/></svg>Refresh</button>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr>
+          <th><svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Sent</th>
+          <th><svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Form</th>
+          <th><svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Resident</th>
+          <th><svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Status</th>
+          <th><svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Progress</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="jobs"></tbody>
+      </table></div>
+      <div class="msg" id="jmsg"></div>
+    </section>
+    <p class="help"><strong>Need help?</strong> Contact our support team.</p>
+  </div>
 </main>
 <script>
 const $=s=>document.querySelector(s);let KEY=sessionStorage.getItem('ok')||'';
@@ -71,4 +114,6 @@ $('#jobs').onclick=async e=>{const b=e.target.closest('button[data-a]');if(!b)re
     $('#jmsg').textContent=b.dataset.a==='resend'?('Link resent.'+(j.link?' Test link: '+j.link:'')):'Cancelled.';load()}
   catch(err){$('#jmsg').textContent=err.message}};
 if(KEY)enter();
-</script></body></html>
+</script>
+</body>
+</html>

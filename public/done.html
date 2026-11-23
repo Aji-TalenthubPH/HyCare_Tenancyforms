@@ -1,14 +1,29 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>All done</title>
-<style>
-:root{--bg:#f2f5f8;--card:#fff;--ink:#14202b;--mute:#5c6b78;--line:#d9e0e7;color-scheme:light dark}
-@media (prefers-color-scheme:dark){:root{--bg:#0f161d;--card:#18222c;--ink:#e8eef3;--mute:#9aabb9;--line:#2a3743}}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:520px;margin:12vh auto;padding:0 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px}
-h1{margin:0 0 8px;font-size:1.5rem}p{color:var(--mute);margin:0 0 8px}
-</style></head><body><main><div class="card">
-<h1>Thank you, you’re all done</h1>
-<p>Your signature has been saved and the next person has been notified.</p>
-<p>Once everyone has signed, a copy of the completed form will be emailed to you. You can close this page.</p>
-</div></main></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>All done</title>
+<link rel="icon" href="assets/hycare-logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/hycare.css">
+</head>
+<body class="done">
+<header class="topbar">
+  <img class="brand-logo" src="assets/hycare-logo.svg" alt="HyCare Disability and Community Services">
+</header>
+<main>
+  <div class="card done-card">
+    <div class="mark" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <h1>Thank you, you’re all done</h1>
+    <p>Your signature has been saved and the next person has been notified.</p>
+    <p>Once everyone has signed, a copy of the completed form will be emailed to you. You can close this page.</p>
+  </div>
+</main>
+</body>
+</html>
