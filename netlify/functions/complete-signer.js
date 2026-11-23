@@ -6,7 +6,7 @@ export default async (req) => {
   const { data: s } = await db.from('signers').select('*').eq('token_hash', hash(token || '')).maybeSingle();
   if (!s || s.status === 'completed' || s.status === 'waiting') return json(400, { error: 'This link cannot be used.' });
   const { data: job } = await db.from('signing_jobs').select('*').eq('id', s.job_id).single();
-  if (job.status === 'cancelled' || new Date(job.expires_at) < new Date()) return json(410, { error: 'This request is no longer active.' });
+  if (job.deleted_at || job.status === 'cancelled' || new Date(job.expires_at) < new Date()) return json(410, { error: 'This request is no longer active.' });
 
   if (consent !== true) return json(400, { error: 'Please agree to sign electronically.' });
   if (typeof signaturePng !== 'string' || !signaturePng.startsWith('data:image/png;base64,') || signaturePng.length > 400000)

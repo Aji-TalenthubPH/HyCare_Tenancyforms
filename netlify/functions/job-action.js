@@ -29,5 +29,17 @@ export default async (req) => {
     await audit(jobId, cur.id, 'link_resent', null, req);
     return json(200, { ok: true, link: DRY() ? link : undefined });
   }
+  if (action === 'archive') {
+    if (job.deleted_at) return json(200, { ok: true });
+    const live = ['sent', 'in_progress', 'finalizing'].includes(job.status);
+    const now = new Date().toISOString();
+    const patch = { deleted_at: now, updated_at: now };
+    if (live) patch.status = 'cancelled';
+    const { error } = await db.from('signing_jobs').update(patch).eq('id', jobId);
+    if (error) return json(500, { error: error.message });
+    if (live) await audit(jobId, null, 'cancelled_by_owner', { via: 'archive' }, req);
+    await audit(jobId, null, 'job_archived', { previous_status: job.status }, req);
+    return json(200, { ok: true });
+  }
   return json(400, { error: 'Unknown action' });
 };
