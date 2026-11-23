@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Tenancy signing: owner</title>
+<style>
+:root{--bg:#f2f5f8;--card:#fff;--ink:#14202b;--mute:#5c6b78;--line:#d9e0e7;--acc:#0f5f8a;--acc-ink:#fff;--soft:#e2eef5;--bad:#b3341f;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#0f161d;--card:#18222c;--ink:#e8eef3;--mute:#9aabb9;--line:#2a3743;--acc:#5db3e3;--acc-ink:#07202e;--soft:#1c2f3d;--bad:#ff8f7a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:960px;margin:0 auto;padding:24px 16px 64px}h1{font-size:1.6rem;margin:0 0 14px}h2{font-size:1.1rem;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+label{display:block;font-weight:600;font-size:.92rem;margin:12px 0 4px}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+button{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:9px 14px;cursor:pointer}
+button.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}button:disabled{opacity:.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 14px}
+.msg{margin-top:12px;font-size:.92rem}.err{color:var(--bad)}.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:720px}th{text-align:left;font-size:.82rem;color:var(--mute);padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.92rem}
+.badge{font-size:.75rem;background:var(--soft);color:var(--acc);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}[hidden]{display:none!important}
+</style></head><body><main>
+<h1>Tenancy signing</h1>
+<section class="card" id="login"><h2>Owner login</h2>
+  <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password">
+  <div class="row" style="margin-top:12px"><button class="primary" id="go">Log in</button></div><div class="msg err" id="lerr"></div></section>
+<div id="app" hidden>
+<section class="card"><h2>Send a form for signing</h2>
+  <div class="grid">
+    <div><label for="form">Form</label><select id="form"><option value="r18">Form R18: Rooming accommodation agreement</option><option value="f1a">Form 1a: Entry condition report</option></select></div>
+    <div><label for="first">Who completes it first?</label><select id="first"><option value="resident">The resident or tenant first, then me</option><option value="staff">Me first, then the resident or tenant</option></select></div>
+    <div><label for="rname">Resident or tenant name</label><input id="rname" autocomplete="off"></div>
+    <div><label for="remail">Resident or tenant email</label><input id="remail" type="email" autocomplete="off"></div>
+    <div><label for="oname">Your name</label><input id="oname"></div>
+    <div><label for="oemail">Your email</label><input id="oemail" type="email"></div>
+  </div>
+  <div class="row" style="margin-top:16px"><button class="primary" id="send">Send</button></div><div class="msg" id="smsg" role="status"></div>
+</section>
+<section class="card"><div class="row" style="justify-content:space-between"><h2>Signing jobs</h2><button id="refresh">Refresh</button></div>
+  <div class="scroll"><table><thead><tr><th>Sent</th><th>Form</th><th>Resident</th><th>Status</th><th>Progress</th><th></th></tr></thead><tbody id="jobs"></tbody></table></div><div class="msg" id="jmsg"></div></section>
+</div>
+</main>
+<script>
+const $=s=>document.querySelector(s);let KEY=sessionStorage.getItem('ok')||'';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const FORM={r18:'Form R18',f1a:'Form 1a'};const STATUS={sent:'Sent',in_progress:'In progress',finalizing:'Finishing',finished:'Finished',cancelled:'Cancelled'};
+async function api(path,opts={}){const r=await fetch('/.netlify/functions/'+path,{...opts,headers:{'content-type':'application/json','x-owner-key':KEY,...(opts.headers||{})}});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(j.error||'Request failed'),{status:r.status});return j}
+async function enter(){
+  try{await api('list-jobs');sessionStorage.setItem('ok',KEY);$('#login').hidden=true;$('#app').hidden=false;
+    $('#oemail').value=localStorage.getItem('oemail')||'';$('#oname').value=localStorage.getItem('oname')||'';setFirst();load()}
+  catch(e){KEY='';sessionStorage.removeItem('ok');$('#lerr').textContent=e.status===401?'Wrong password.':'Could not reach the server.'}
+}
+function setFirst(){$('#first').value=$('#form').value==='f1a'?'staff':'resident'}
+async function load(){
+  try{const {jobs}=await api('list-jobs');
+    $('#jobs').innerHTML=jobs.map(j=>{const prog=j.signers.map(s=>(s.role==='staff'?'Me':'Resident')+': '+s.status.replace('opened','opened, not signed').replace('sent','waiting for them')).join('<br>');
+      const act=[];if(['sent','in_progress'].includes(j.status))act.push(`<button data-a="resend" data-id="${j.id}">Resend</button>`,`<button data-a="cancel" data-id="${j.id}">Cancel</button>`);
+      if(j.finalUrl)act.push(`<a href="${esc(j.finalUrl)}"><button>Download signed PDF</button></a>`);
+      return `<tr><td>${new Date(j.created_at).toLocaleString('en-AU')}</td><td>${FORM[j.form]}</td><td>${esc(j.recipient_name||'')}<br><span style="color:var(--mute)">${esc(j.recipient_email)}</span></td><td><span class="badge">${STATUS[j.status]||j.status}</span></td><td>${prog}</td><td><div class="row">${act.join('')}</div></td></tr>`}).join('')||'<tr><td colspan="6" style="color:var(--mute)">No jobs yet.</td></tr>'}
+  catch(e){$('#jmsg').textContent=e.message}
+}
+$('#go').onclick=()=>{KEY=$('#pw').value;enter()};$('#pw').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+$('#form').onchange=setFirst;$('#refresh').onclick=load;
+$('#send').onclick=async()=>{
+  const m=$('#smsg');m.className='msg';m.textContent='Sending…';$('#send').disabled=true;
+  try{localStorage.setItem('oemail',$('#oemail').value);localStorage.setItem('oname',$('#oname').value);
+    const j=await api('create-job',{method:'POST',body:JSON.stringify({form:$('#form').value,firstRole:$('#first').value,recipientName:$('#rname').value,recipientEmail:$('#remail').value,ownerName:$('#oname').value,ownerEmail:$('#oemail').value})});
+    m.innerHTML='Sent.'+(j.firstLink?' Link for the first signer: <a href="'+esc(j.firstLink)+'">open the form</a>':'');load()}
+  catch(e){m.className='msg err';m.textContent=e.message}$('#send').disabled=false};
+$('#jobs').onclick=async e=>{const b=e.target.closest('button[data-a]');if(!b)return;
+  if(b.dataset.a==='cancel'&&!confirm('Cancel this signing job? Links will stop working.'))return;
+  try{const j=await api('job-action',{method:'POST',body:JSON.stringify({action:b.dataset.a,jobId:b.dataset.id})});
+    $('#jmsg').textContent=b.dataset.a==='resend'?('Link resent.'+(j.link?' Test link: '+j.link:'')):'Cancelled.';load()}
+  catch(err){$('#jmsg').textContent=err.message}};
+if(KEY)enter();
+</script></body></html>
