@@ -5,7 +5,7 @@ import { buildFinalPdf, FORM_NAMES } from './_pdf.js';
 export default async (req) => {
   const { jobId } = await req.json();
   const { data: job } = await db.from('signing_jobs').select('*').eq('id', jobId).single();
-  if (!job || job.status !== 'in_progress') return;
+  if (!job || job.deleted_at || job.status !== 'in_progress') return;
   const { data: signers } = await db.from('signers').select('*').eq('job_id', jobId).order('position');
   if (!signers.length || signers.some((s) => s.status !== 'completed')) return;
 
@@ -24,9 +24,11 @@ export default async (req) => {
     const up = await db.storage.from('signing-pdfs').upload(finalPath, Buffer.from(out.bytes), { contentType: 'application/pdf', upsert: true });
     if (up.error) throw new Error('Could not store the final PDF: ' + up.error.message);
 
+    const { data: still } = await db.from('signing_jobs').select('deleted_at').eq('id', jobId).single();
+    if (still && still.deleted_at) return;
     await db.from('signing_jobs').update({
       status: 'finished', final_pdf_path: finalPath, final_sha256: out.finalHash, updated_at: new Date().toISOString()
-    }).eq('id', jobId);
+    }).eq('id', jobId).is('deleted_at', null);
     await audit(jobId, null, 'finalized', { finalSha256: out.finalHash, preCertificateSha256: out.preHash, fieldsSkipped: out.skipped });
 
     const base64 = Buffer.from(out.bytes).toString('base64');
@@ -41,7 +43,7 @@ export default async (req) => {
     await audit(jobId, null, 'final_copy_emailed', null);
   } catch (e) {
     console.error('finalize failed', e);
-    await db.from('signing_jobs').update({ status: 'in_progress' }).eq('id', jobId);
+    await db.from('signing_jobs').update({ status: 'in_progress' }).eq('id', jobId).eq('status', 'finalizing').is('deleted_at', null);
     await audit(jobId, null, 'finalize_failed', { message: String(e.message || e) });
   }
 };

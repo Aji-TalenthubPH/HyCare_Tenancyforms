@@ -7,7 +7,7 @@ export default async (req) => {
   if (!s) return json(404, { error: 'This link is not valid.' });
   const { data: job } = await db.from('signing_jobs').select('*').eq('id', s.job_id).single();
 
-  if (job.status === 'cancelled') return json(410, { error: 'This request was cancelled by the sender.' });
+  if (job.deleted_at || job.status === 'cancelled') return json(410, { error: 'This request was cancelled by the sender.' });
   if (new Date(job.expires_at) < new Date()) return json(410, { error: 'This link has expired. Ask the sender for a new one.' });
   if (s.status === 'completed') return json(409, { error: 'You have already signed this form. Thank you.' });
   if (s.status === 'waiting') return json(425, { error: 'This form is not ready for you yet.' });
